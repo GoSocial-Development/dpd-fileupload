@@ -55,7 +55,7 @@ function Fileupload(options) {
 util.inherits(Fileupload, Resource);
 
 Fileupload.label = "File upload";
-Fileupload.events = ["get", "upload", "delete"];
+Fileupload.events = ["get", "upload", "delete", "beforeRequest", "afterCommit"];
 Fileupload.prototype.clientGeneration = true;
 Fileupload.basicDashboard = {
     settings: [
@@ -86,6 +86,16 @@ Fileupload.basicDashboard = {
  * Module methods
  */
 Fileupload.prototype.handle = function (ctx, next) {
+
+     if (this.events.beforeRequest) {
+        this.events.beforeRequest.run(ctx, {
+            url: ctx.url,
+            filename: ctx.url
+        }, function (err) {
+            if (err) return ctx.done(err);
+        });
+     }
+
     var req = ctx.req,
         self = this,
         domain = {url: ctx.url};
@@ -112,13 +122,23 @@ Fileupload.prototype.handle = function (ctx, next) {
             }
 
         // Will send the response if all files have been processed
-        var processDone = function(err) {
-            if (err) return ctx.done(err);
-            remainingFile--;
-            if (remainingFile === 0) {
-                debug("Response sent: ", resultFiles);
-                return ctx.done(null, resultFiles);
-            }
+        var processDone = function (err) {
+          if (err) return ctx.done(err);
+              remainingFile--;
+              if (remainingFile === 0) {
+              debug("Response sent: ", resultFiles);
+                if (self.events.afterCommit) {
+                    self.events.afterCommit.run(ctx, {
+                        url: ctx.url,
+                        result: resultFiles,
+                    }, function (err) {
+                        if (err) return ctx.done(err);
+                        return ctx.done(null, resultFiles);
+                  });
+                } else {
+                    return ctx.done(null, resultFiles);
+                }
+          }
         };
 
         // If we received params from the request
