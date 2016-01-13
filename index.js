@@ -109,7 +109,7 @@ Fileupload.prototype.handle = function (ctx, next) {
 
             if (this.config.authorization && me) {
                 uploaderId = me.id;
-            };
+            }
 
         // Will send the response if all files have been processed
         var processDone = function(err) {
