@@ -177,19 +177,20 @@ Fileupload.prototype.handle = function (ctx, next) {
 				// Store MIME type in object
 				ctx.body.type = mime.lookup(file.name);
 
-				self.save(ctx, processDone);
-
         if (self.events.afterCommit) {
-                    self.events.afterCommit.run(ctx, {
-                        url: ctx.url,
-                        result: resultFiles,
-                    }, function (err) {
-                        if (err) return ctx.done(err);
-                        return ctx.done(null, resultFiles);
-                  });
-                } else {
-                    return ctx.done(null, resultFiles);
-                }
+          self.events.afterCommit.run(ctx, {
+              url: ctx.url,
+              result: resultFiles,
+          }, function (err) {
+              if (err) return ctx.done(err);
+              return ctx.done(null, resultFiles);
+        });
+
+          self.save(ctx, processDone);
+      } else {
+          self.save(ctx, processDone);
+          return ctx.done(null, resultFiles);
+      }
 			});
 		};
 
