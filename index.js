@@ -278,11 +278,16 @@ Fileupload.prototype.handle = function (ctx, next) {
       });
     }
 
-    if (this.events['delete']) {
-      this.events['delete'].run(ctx, domain, function (err) {
+    if (this.events.delete) {
+      this.get(ctx, function(err, result){
         if (err) return ctx.done(err);
-        self.del(ctx, next);
-      });
+        domain.data = result;
+        this.events.delete.run(ctx, domain, function (err) {
+          if (err) return ctx.done(err);
+          self.del(ctx, next);
+        });
+      }.bind(this));
+
     } else {
       this.del(ctx, next);
     }
